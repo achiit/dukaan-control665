@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JMKCC Simple Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+#netlify-badge,iframe[src*="netlify"],a[href*="netlify.com"]{display:none!important}
+:root{
+  --bg:#F4F7FB; --card:#FFFFFF; --pri:#4F46E5; --pri-l:#EEF2FF; 
+  --grn:#10B981; --grn-l:#ECFDF5; --red:#EF4444; --red-l:#FEF2F2; 
+  --ylw:#F59E0B; --ylw-l:#FFFBEB; --blu:#3B82F6; --blu-l:#EFF6FF;
+  --txt:#0F172A; --txt-m:#475569; --txt-l:#94A3B8; --brd:#E2E8F0;
+  --grd-p:linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%);
+  --shd:0 4px 20px rgba(15,23,42,0.05);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Plus Jakarta Sans',sans-serif}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt)}
+.hidden{display:none!important}
+button{cursor:pointer;border:none;font-weight:700;transition:.2s}
+button:active{transform:scale(.96)}
+input,select,textarea{outline:none;font-family:inherit;user-select:text}
+
+#login-screen{position:fixed;inset:0;z-index:999;background:var(--grd-p);display:flex;justify-content:center;align-items:center;padding:20px}
+.login-box{background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:35px;border-radius:24px;width:100%;max-width:380px;box-shadow:0 20px 40px rgba(0,0,0,0.2);text-align:center}
+.login-box h2{margin-bottom:25px;font-size:24px;color:var(--pri);font-weight:800}
+.login-input{width:100%;padding:15px;border-radius:12px;border:1px solid var(--brd);background:var(--bg);margin-bottom:15px;font-size:14px;font-weight:600}
+.btn-login{width:100%;padding:15px;border-radius:12px;background:var(--grd-p);color:#fff;font-size:16px;box-shadow:0 4px 12px rgba(79,70,229,.3)}
+
+#app{display:flex;flex-direction:column;height:100vh}
+.topbar{background:var(--card);padding:15px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.03);z-index:50;border-bottom:1px solid var(--brd)}
+.topbar h1{font-size:18px;font-weight:800;color:var(--pri)}
+.btn-menu{background:var(--pri-l);color:var(--pri);width:40px;height:40px;border-radius:10px;font-size:20px;display:flex;justify-content:center;align-items:center}
+
+#sidebar{position:fixed;top:0;left:-280px;width:270px;height:100vh;background:#0F172A;z-index:100;transition:0.3s cubic-bezier(0.4, 0, 0.2, 1);display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,0.1)}
+#sidebar.open{left:0}
+.sb-head{padding:25px 20px;background:rgba(255,255,255,0.05);color:#fff;border-bottom:1px solid rgba(255,255,255,0.1)}
+.sb-head h2{font-size:20px;font-weight:800;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.sb-head p{font-size:11px;opacity:0.7;word-break:break-all}
+.sb-menu{flex:1;overflow-y:auto;padding:15px 10px}
+.sb-item{padding:14px 15px;border-radius:12px;margin-bottom:5px;display:flex;align-items:center;gap:12px;font-weight:600;color:#94A3B8;cursor:pointer;font-size:14px;transition:0.2s}
+.sb-item:hover{background:rgba(255,255,255,0.05);color:#fff}
+.sb-item.active{background:var(--pri);color:#fff;box-shadow:0 4px 12px rgba(79,70,229,0.4)}
+#overlay{position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:99;display:none}
+#overlay.active{display:block}
+
+#content{flex:1;overflow-y:auto;padding:20px;background:var(--bg)}
+.page-title{font-size:22px;font-weight:800;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;color:var(--txt)}
+.add-btn{background:var(--grn);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(16,185,129,0.3)}
+
+.card{background:var(--card);padding:20px;border-radius:16px;margin-bottom:15px;box-shadow:var(--shd);border:1px solid var(--brd);display:flex;justify-content:space-between;align-items:center;gap:15px;transition:0.2s}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(15,23,42,0.08)}
+.card-info{flex:1}
+.card-info h4{font-size:16px;font-weight:800;margin-bottom:6px;color:var(--txt)}
+.card-info p{font-size:12px;color:var(--txt-m);line-height:1.5;display:flex;align-items:center;gap:6px}
+.badge{font-size:10px;padding:3px 8px;border-radius:6px;color:#fff;font-weight:800;letter-spacing:0.5px}
+.btn-act{padding:8px 12px;border-radius:8px;font-size:12px;color:#fff;font-weight:700;margin-left:5px}
+.btn-edit{background:var(--blu);box-shadow:0 2px 8px rgba(59,130,246,0.3)}
+.btn-del{background:var(--red);box-shadow:0 2px 8px rgba(239,68,68,0.3)}
+.btn-green{background:var(--grn);box-shadow:0 2px 8px rgba(16,185,129,0.3)}
+.btn-yellow{background:var(--ylw);box-shadow:0 2px 8px rgba(245,158,11,0.3)}
+
+#modal{position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(4px);z-index:200;display:none;justify-content:center;align-items:center;padding:15px}
+#modal.active{display:flex}
+.modal-box{background:var(--card);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;border-radius:20px;padding:25px;box-shadow:0 20px 40px rgba(0,0,0,0.2);animation:popIn 0.3s}
+@keyframes popIn{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-box h3{font-size:20px;margin-bottom:20px;display:flex;justify-content:space-between;font-weight:800;color:var(--pri)}
+.close-btn{background:var(--bg);color:var(--txt-m);width:32px;height:32px;border-radius:50%;font-size:18px;display:flex;justify-content:center;align-items:center}
+.form-group{margin-bottom:15px}
+.form-group label{display:block;font-size:12px;font-weight:800;color:var(--txt-m);margin-bottom:6px}
+.form-input{width:100%;padding:12px 15px;border:1.5px solid var(--brd);border-radius:12px;font-size:14px;background:var(--bg);font-weight:600;transition:0.2s}
+.form-input:focus{border-color:var(--pri);background:#fff;box-shadow:0 0 0 4px var(--pri-l)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.btn-submit{width:100%;padding:15px;border-radius:12px;background:var(--pri);color:#fff;font-size:15px;margin-top:15px;box-shadow:0 4px 12px rgba(79,70,229,0.3)}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+.stat-card{background:var(--card);padding:20px;border-radius:16px;border:1px solid var(--brd);box-shadow:var(--shd);text-align:center}
+.stat-card h2{font-size:32px;font-weight:800;margin-bottom:5px}
+.stat-card p{font-size:12px;font-weight:700;color:var(--txt-m)}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#0F172A;color:#fff;padding:12px 24px;border-radius:30px;font-size:13px;font-weight:600;transition:0.3s;z-index:999;box-shadow:0 10px 20px rgba(0,0,0,0.2)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--red)}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <h2>JMKCC Admin</h2>
+    <input type="email" id="email" class="login-input" placeholder="Admin Email">
+    <input type="password" id="pass" class="login-input" placeholder="Password">
+    <button class="btn-login" onclick="login()">Login</button>
+    <p id="err" style="color:var(--red);font-size:12px;margin-top:10px;font-weight:600;"></p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="topbar">
+    <button class="btn-menu" onclick="toggleMenu()">☰</button>
+    <h1 id="page-title">Dashboard</h1>
+    <button class="btn-menu" onclick="logout()" style="color:var(--red);background:var(--red-l);">✕</button>
+  </div>
+  
+  <div id="overlay" onclick="toggleMenu()"></div>
+  
+  <div id="sidebar">
+    <div class="sb-head">
+      <h2>🎓 JMKCC Admin</h2>
+      <p id="admin-email">—</p>
+    </div>
+    <div class="sb-menu">
+      <div class="sb-item active" onclick="nav('dashboard',this)">📊 Dashboard</div>
+      <div class="sb-item" onclick="nav('courses',this)">🎥 Manage Courses</div>
+      <div class="sb-item" onclick="nav('tests',this)">📝 Manage Tests</div>
+      <div class="sb-item" onclick="nav('reports',this)">🚨 Cheating Reports</div>
+      <div class="sb-item" onclick="nav('notes',this)">📄 Notes & PDFs</div>
+      <div class="sb-item" onclick="nav('subjects',this)">📖 Subjects</div>
+      <div class="sb-item" onclick="nav('ncert',this)">📕 NCERT Books</div>
+      <div class="sb-item" onclick="nav('papers',this)">📋 Previous Papers</div>
+      <div class="sb-item" onclick="nav('timetable',this)">📅 Class Timetable</div>
+      <div class="sb-item" onclick="nav('payments',this)">💳 Payments</div>
+      <div class="sb-item" onclick="nav('doubts',this)">❓ Students Doubts</div>
+      <div class="sb-item" onclick="nav('students',this)">👥 Students List</div>
+      <div class="sb-item" onclick="nav('notifications',this)">🔔 Send Notification</div>
+      <div class="sb-item" onclick="nav('settings',this)">⚙️ App Settings</div>
+    </div>
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<div id="modal" onclick="if(event.target.id==='modal')closeModal()">
+  <div class="modal-box" id="modal-content"></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, getDocs, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const ADMIN_EMAIL = "jmkcc947335@gmail.com";
+const firebaseConfig = { apiKey: "AIzaSyC0qCf4Vb0SQtOKUxYh_7_u9Kb0-0uPTmc", authDomain: "jmkcc-8aeaf.firebaseapp.com", projectId: "jmkcc-8aeaf", storageBucket: "jmkcc-8aeaf.firebasestorage.app", messagingSenderId: "223185775528", appId: "1:223185775528:web:296dd044a888fac0080b9d" };
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwmnkwrDl5EBfesqWgn-IhaqH_5GNrYe50hQAKqC1OoknUf3iSO6_EG63JtGyRXME6M9Q/exec";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const CLASSES = ['9th','10th','11th','12th'];
+let testQuestions = [];
+
+window.login = async () => {
+  const email = $('email').value, pass = $('pass').value;
+  if(!email || !pass) return;
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e) { $('err').innerText = "Galat Email ya Password!"; }
+};
+window.logout = () => signOut(auth);
+
+onAuthStateChanged(auth, user => {
+  if(user && user.email === ADMIN_EMAIL) {
+    $('login-screen').classList.add('hidden'); $('app').classList.remove('hidden');
+    $('admin-email').innerText = user.email; nav('dashboard');
+  } else if(user) { alert("Access Denied! Only Admin can login."); signOut(auth); }
+  else { $('login-screen').classList.remove('hidden'); $('app').classList.add('hidden'); }
+});
+
+window.toggleMenu = () => { $('sidebar').classList.toggle('open'); $('overlay').classList.toggle('active'); };
+window.closeMenu = () => { $('sidebar').classList.remove('open'); $('overlay').classList.remove('active'); };
+window.toast = (msg, type='') => { const t=$('toast'); t.innerText=msg; t.className='toast show '+type; setTimeout(()=>t.classList.remove('show'), 2500); };
+window.openModal = html => { $('modal-content').innerHTML=html; $('modal').classList.add('active'); };
+window.closeModal = () => $('modal').classList.remove('active');
+
+window.nav = async (page, el=null) => {
+  closeMenu();
+  if(el) { document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active')); el.classList.add('active'); }
+  $('page-title').innerText = page.charAt(0).toUpperCase() + page.slice(1).replace('_',' ');
+  $('content').innerHTML = '<p style="text-align:center;padding:20px;font-weight:700;color:var(--pri);">Loading...</p>';
+  
+  if(page === 'dashboard') loadDashboard();
+  if(page === 'courses') loadCourses();
+  if(page === 'tests') loadTests();
+  if(page === 'reports') loadReports();
+  if(page === 'notes') loadNotes();
+  if(page === 'subjects') loadSubjects();
+  if(page === 'ncert') loadNcert();
+  if(page === 'papers') loadPapers();
+  if(page === 'timetable') loadTimetable();
+  if(page === 'payments') loadPayments();
+  if(page === 'doubts') loadDoubts();
+  if(page === 'students') loadUsers();
+  if(page === 'notifications') loadNotifications();
+  if(page === 'settings') loadSettings();
+};
+
+async function fetchAll(col) { const snap = await getDocs(collection(db, col)); return snap.docs.map(d=>({id:d.id,...d.data()})); }
+
+// --- Dashboard ---
+async function loadDashboard() {
+  const [users, courses, payments, doubts] = await Promise.all([fetchAll('users'), fetchAll('courses'), fetchAll('payments'), fetchAll('doubts')]);
+  const pendingPay = payments.filter(p=>p.status==='pending').length;
+  const pendingDoubts = doubts.filter(d=>d.status==='pending').length;
+  $('content').innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><h2 style="color:var(--pri);">${users.length}</h2><p>Total Students</p></div>
+      <div class="stat-card"><h2 style="color:var(--blu);">${courses.length}</h2><p>Total Courses</p></div>
+      <div class="stat-card"><h2 style="color:var(--ylw);">${pendingPay}</h2><p>Pending Payments</p></div>
+      <div class="stat-card"><h2 style="color:var(--red);">${pendingDoubts}</h2><p>Pending Doubts</p></div>
+    </div>
+  `;
+}
+
+// --- Courses ---
+async function loadCourses() {
+  const all = await fetchAll('courses');
+  $('content').innerHTML = `<div class="page-title">Manage Courses <button class="add-btn" onclick="editCourse(null)">+ Add Course</button></div>` + 
+    (all.length ? all.map(c=>`
+      <div class="card">
+        <div class="card-info">
+          <h4>${esc(c.title)} <span class="badge" style="background:${c.isPublished!==false?'var(--grn)':'var(--red)'};">${c.isPublished!==false?'LIVE':'DRAFT'}</span></h4>
+          <p>📚 Class: ${esc(c.class)} | 💰 ${c.type === 'free' ? 'FREE' : '₹'+c.price}</p>
+        </div>
+        <div>
+          ${c.isPublished===false?`<button class="btn-act btn-green" onclick="pub('courses','${c.id}','loadCourses')">Publish</button>`:`<button class="btn-act btn-yellow" onclick="draft('courses','${c.id}','loadCourses')">Draft</button>`}
+          <button class="btn-act btn-edit" onclick="editCourse('${c.id}')">Edit</button>
+          <button class="btn-act btn-del" onclick="delItem('courses','${c.id}','loadCourses')">Delete</button>
+        </div>
+      </div>`).join('') : '<div class="card"><p style="width:100%;text-align:center;color:var(--txt-l);">Koi Course nahi hai.</p></div>');
+}
+window.editCourse = async (id=null) => {
+  let c = id ? (await fetchAll('courses')).find(x=>x.id===id) : {};
+  openModal(`
+    <h3>${id?'Edit':'Add New'} Course <button class="close-btn" onclick="closeModal()">✕</button></h3>
+    <div class="form-group"><label>Course Title</label><input id="c-title" class="form-input" value="${esc(c.title||'')}" placeholder="e.g. Class 12 Physics Full Course"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Class</label><select id="c-class" class="form-input">${CLASSES.map(x=>`<option ${c.class===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Type</label><select id="c-type" class="form-input"><option value="free" ${c.type==='free'?'selected':''}>Free</option><option value="paid" ${c.type==='paid'?'selected':''}>Paid</option></select></div>
+    </div>
+    <div class="form-group"><label>Price (If Paid)</label><input type="number" id="c-price" class="form-input" value="${c.price||0}"></div>
+    <div class="form-group"><label>Video / Website Link</label><input id="c-videoUrl" class="form-input" value="${esc(c.videoUrl||'')}" placeholder="https://..."></div>
+    <div class="form-group"><label>Poster Image URL (Optional)</label><input id="c-imageUrl" class="form-input" value="${esc(c.imageUrl||'')}" placeholder="https://..."></div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn-submit" style="background:#CBD5E1;color:var(--txt);" onclick="saveCourse('${id||''}', false)">Save Draft</button>
+      <button class="btn-submit" style="background:var(--grn);" onclick="saveCourse('${id||''}', true)">Publish Live</button>
+    </div>
+  `);
+};
+window.saveCourse = async (id, publish) => {
+  const data = { title:$('c-title').value, class:$('c-class').value, type:$('c-type').value, price:Number($('c-price').value), videoUrl:$('c-videoUrl').value, imageUrl:$('c-imageUrl').value, isPublished:publish };
+  if(!data.title) return toast('Title required','error');
+  try {
+    if(id) await updateDoc(doc(db,'courses',id), data);
+    else await addDoc(collection(db,'courses'), {...data, createdAt:new Date()});
+    toast(publish?'✅ Course Live!':'📝 Draft Saved'); closeModal(); loadCourses();
+  } catch(e) { toast(e.message,'error'); }
+};
+
+// --- Tests ---
+async function loadTests() {
+  const all = await fetchAll('tests');
+  $('content').innerHTML = `<div class="page-title">Manage Tests <button class="add-btn" onclick="editTest(null)">+ Create Test</button></div>` + 
+    (all.length ? all.map(t=>`
+      <div class="card">
+        <div class="card-info">
+          <h4>${esc(t.title)} <span class="badge" style="background:${t.isPublished!==false?'var(--grn)':'var(--red)'};">${t.isPublished!==false?'LIVE':'DRAFT'}</span></h4>
+          <p>🎓 Class: ${esc(t.class)} | 📖 Sub: ${esc(t.subject)} | ⏱ ${t.duration} Min | 📝 ${t.questions?.length||0} Qs</p>
+        </div>
+        <div>
+          ${t.isPublished===false?`<button class="btn-act btn-green" onclick="pub('tests','${t.id}','loadTests')">Publish</button>`:`<button class="btn-act btn-yellow" onclick="draft('tests','${t.id}','loadTests')">Draft</button>`}
+          <button class="btn-act btn-edit" onclick="editTest('${t.id}')">Edit</button>
+          <button class="btn-act btn-del" onclick="delItem('tests','${t.id}','loadTests')">Delete</button>
+        </div>
+      </div>`).join('') : '<div class="card"><p style="width:100%;text-align:center;color:var(--txt-l);">Koi Test nahi hai.</p></div>');
+}
+window.editTest = async (id=null) => {
+  let t = id ? (await fetchAll('tests')).find(x=>x.id===id) : {};
+  testQuestions = JSON.parse(JSON.stringify(t.questions||[]));
+  openModal(`
+    <h3>${id?'Edit':'Create New'} Test <button class="close-btn" onclick="closeModal()">✕</button></h3>
+    <div class="form-group"><label>Test Title</label><input id="t-title" class="form-input" value="${esc(t.title||'')}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Class</label><select id="t-class" class="form-input">${CLASSES.map(x=>`<option ${t.class===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Duration (Mins)</label><input type="number" id="t-duration" class="form-input" value="${t.duration||30}"></div>
+    </div>
+    <div class="form-group"><label>Subject</label><input id="t-subject" class="form-input" value="${esc(t.subject||'')}"></div>
+    <div class="form-group"><label>Test Type</label><select id="t-type" class="form-input"><option value="free" ${t.type!=='paid'?'selected':''}>Free Test</option><option value="paid" ${t.type==='paid'?'selected':''}>Book Test</option></select></div>
+    
+    <div style="margin:20px 0 10px;font-weight:800;font-size:15px;display:flex;justify-content:space-between;align-items:center;color:var(--pri);">
+      <span>Questions (${testQuestions.length})</span>
+      <button class="add-btn" onclick="addQ()" style="padding:6px 12px;border-radius:8px;font-size:12px;">+ Add Question</button>
+    </div>
+    <div id="q-box"></div>
+    
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn-submit" style="background:#CBD5E1;color:var(--txt);" onclick="saveTest('${id||''}', false)">Save Draft</button>
+      <button class="btn-submit" style="background:var(--grn);" onclick="saveTest('${id||''}', true)">Publish Live</button>
+    </div>
+  `);
+  renderQBox();
+};
+window.addQ = () => { testQuestions.push({text:'', options:['','','',''], correct:0}); renderQBox(); };
+window.removeQ = i => { testQuestions.splice(i,1); renderQBox(); };
+window.updQ = (i,f,v) => { testQuestions[i][f]=v; };
+window.updO = (i,oi,v) => { testQuestions[i].options[oi]=v; };
+window.setC = (i,oi) => { testQuestions[i].correct=oi; };
+function renderQBox() {
+  const box = $('q-box');
+  box.innerHTML = testQuestions.map((q,i)=>`
+    <div style="border:1.5px solid var(--brd);padding:15px;border-radius:14px;margin-bottom:12px;background:var(--bg);position:relative;">
+      <button class="btn-act btn-del" style="position:absolute;top:10px;right:10px;padding:4px 8px;" onclick="removeQ(${i})">✕</button>
+      <label style="font-size:11px;font-weight:800;color:var(--pri);margin-bottom:5px;display:block;">Question ${i+1}</label>
+      <input class="form-input" style="margin-bottom:10px;background:#fff;" placeholder="Type question here..." value="${esc(q.text)}" oninput="updQ(${i},'text',this.value)">
+      ${q.options.map((o,oi)=>`
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <input type="radio" name="c-${i}" ${q.correct===oi?'checked':''} onchange="setC(${i},${oi})" style="width:18px;height:18px;accent-color:var(--pri);">
+          <input class="form-input" style="padding:8px 12px;background:#fff;" placeholder="Option ${oi+1}" value="${esc(o)}" oninput="updO(${i},${oi},this.value)">
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+window.saveTest = async (id, publish) => {
+  const type = $('t-type').value;
+  const data = { 
+    title:$('t-title').value, class:$('t-class').value, subject:$('t-subject').value, 
+    duration:Number($('t-duration').value), type: type, isBookTest: type === 'paid', 
+    isPublished:publish, questions:testQuestions 
+  };
+  if(!data.title) return toast('Title required','error');
+  if(data.questions.length===0) return toast('Add questions','error');
+  try {
+    if(id) await updateDoc(doc(db,'tests',id), data);
+    else await addDoc(collection(db,'tests'), {...data, createdAt:new Date()});
+    toast(publish?'✅ Test Live!':'📝 Draft Saved'); closeModal(); loadTests();
+  } catch(e) { toast(e.message,'error'); }
+};
+
+// --- Cheating Reports ---
+async function loadReports() {
+  const all = await fetchAll('test_attempts'); 
+  all.sort((a,b)=>(b.startedAt?.toMillis?.()||0)-(a.startedAt?.toMillis?.()||0));
+  
+  $('content').innerHTML = `<div class="page-title">Test & Cheating Reports</div>` + 
+    (all.length ? all.map(t=>`
+      <div class="card" style="${t.status==='blocked' ? 'border-left:4px solid var(--red); background:var(--red-l);' : ''}">
+        <div class="card-info">
+          <h4>${esc(t.name)} <span class="badge" style="background:${t.status==='completed'?'var(--grn)':t.status==='blocked'?'var(--red)':'var(--ylw)'};">${t.status.toUpperCase()}</span></h4>
+          <p><b>Test:</b> ${esc(t.testTitle)}</p>
+          <p><b>Mobile:</b> ${esc(t.mobile)} | <b>Email:</b> ${esc(t.email)}</p>
+          ${t.status === 'blocked' ? `<p style="color:var(--red);font-weight:800;margin-top:8px;font-size:13px;">🚨 Cheating Detected (App Switched)</p>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <button class="btn-act btn-edit" onclick="viewAnswers('${t.id}')">View Ans</button>
+          ${t.status==='blocked' ? `<button class="btn-act btn-green" onclick="unblockTest('${t.id}')">Unblock</button>` : ''}
+          <button class="btn-act btn-del" onclick="delItem('test_attempts','${t.id}','loadReports')">Delete</button>
+        </div>
+      </div>`).join('') : '<div class="card"><p style="width:100%;text-align:center;color:var(--txt-l);">Koi Report nahi hai.</p></div>');
+}
+window.unblockTest = async (id) => { if(!confirm("Unblock Student?")) return; await updateDoc(doc(db, 'test_attempts', id), { status: 'in-progress' }); toast('✅ Unblocked!'); loadReports(); };
+window.viewAnswers = async (id) => {
+  const t = (await getDoc(doc(db, 'test_attempts', id))).data();
+  let html = `<h3>Answers - ${esc(t.name)} <button class="close-btn" onclick="closeModal()">✕</button></h3>`;
+  const qs = t.questionsSnapshot || [], ans = t.userAnswers || {};
+  if(!qs.length) html += `<p style="text-align:center;color:var(--txt-l);">No snapshot available.</p>`; else {
+    html += `<div style="display:flex;flex-direction:column;gap:10px;">`;
+    qs.forEach((q, i) => { 
+      const sel = ans[i], isC = sel === q.correct, sTxt = sel !== undefined ? q.options[sel] : 'Not Attempted', cTxt = q.options[q.correct];
+      html += `<div style="border:1px solid var(--brd);padding:12px;border-radius:10px;background:${sel===undefined?'#fff':isC?'var(--grn-l)':'var(--red-l)'}">
+        <p style="font-weight:800;font-size:13px;margin-bottom:5px;">Q${i+1}. ${esc(q.text)}</p>
+        <p style="font-size:12px;font-weight:600;">Student: <span style="color:${isC?'var(--grn)':'var(--red)'};">${esc(sTxt)}</span></p>
+        <p style="font-size:12px;font-weight:600;">Correct: <span style="color:var(--grn);">${esc(cTxt)}</span></p>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  openModal(html);
+};
+
+// --- Subjects, Notes, NCERT, Papers, Timetable (WITH CLASS FIX) ---
+async function loadSubjects() {
+  const all = await fetchAll('subjects');
+  $('content').innerHTML = `<div class="page-title">Subjects <button class="add-btn" onclick="editDoc('subjects','loadSubjects')">+ Add</button></div>` + 
+    all.map(s=>`<div class="card"><div class="card-info"><h4>${esc(s.name||s.title)}</h4><p>Class: ${esc(s.class)}</p></div><div><button class="btn-act btn-edit" onclick="editDoc('subjects','loadSubjects','${s.id}')">Edit</button><button class="btn-act btn-del" onclick="delItem('subjects','${s.id}','loadSubjects')">Del</button></div></div>`).join('');
+}
+async function loadNotes() {
+  const all = await fetchAll('notes');
+  $('content').innerHTML = `<div class="page-title">Notes <button class="add-btn" onclick="editDoc('notes','loadNotes')">+ Add</button></div>` + 
+    all.map(n=>`<div class="card"><div class="card-info"><h4>${esc(n.title)}</h4><p>Class: ${esc(n.class)}</p></div><div><button class="btn-act btn-edit" onclick="editDoc('notes','loadNotes','${n.id}')">Edit</button><button class="btn-act btn-del" onclick="delItem('notes','${n.id}','loadNotes')">Del</button></div></div>`).join('');
+}
+async function loadNcert() {
+  const all = await fetchAll('ncert_books');
+  $('content').innerHTML = `<div class="page-title">NCERT <button class="add-btn" onclick="editDoc('ncert_books','loadNcert')">+ Add</button></div>` + 
+    all.map(n=>`<div class="card"><div class="card-info"><h4>${esc(n.title)}</h4><p>Class: ${esc(n.class)}</p></div><div><button class="btn-act btn-edit" onclick="editDoc('ncert_books','loadNcert','${n.id}')">Edit</button><button class="btn-act btn-del" onclick="delItem('ncert_books','${n.id}','loadNcert')">Del</button></div></div>`).join('');
+}
+async function loadPapers() {
+  const all = await fetchAll('papers');
+  $('content').innerHTML = `<div class="page-title">Papers <button class="add-btn" onclick="editDoc('papers','loadPapers')">+ Add</button></div>` + 
+    all.map(p=>`<div class="card"><div class="card-info"><h4>${esc(p.title)}</h4><p>Class: ${esc(p.class)}</p></div><div><button class="btn-act btn-edit" onclick="editDoc('papers','loadPapers','${p.id}')">Edit</button><button class="btn-act btn-del" onclick="delItem('papers','${p.id}','loadPapers')">Del</button></div></div>`).join('');
+}
+async function loadTimetable() {
+  const all = await fetchAll('timetable');
+  $('content').innerHTML = `<div class="page-title">Timetable <button class="add-btn" onclick="editDoc('timetable','loadTimetable')">+ Add</button></div>` + 
+    all.map(t=>`<div class="card"><div class="card-info"><h4>${esc(t.day||t.title)}</h4><p>Class: ${esc(t.class)}</p></div><div><button class="btn-act btn-edit" onclick="editDoc('timetable','loadTimetable','${t.id}')">Edit</button><button class="btn-act btn-del" onclick="delItem('timetable','${t.id}','loadTimetable')">Del</button></div></div>`).join('');
+}
+
+window.editDoc = async (col, fn, id=null) => {
+  let d = id ? (await fetchAll(col)).find(x=>x.id===id) : {};
+  openModal(`<h3>${id?'Edit':'Add'} <button class="close-btn" onclick="closeModal()">✕</button></h3>
+  <div class="form-group"><label>Title / Name</label><input id="d-title" class="form-input" value="${esc(d.title||d.name||d.day||'')}"></div>
+  <div class="form-group"><label>Class</label><select id="d-class" class="form-input">${CLASSES.map(x=>`<option ${d.class===x?'selected':''}>${x}</option>`).join('')}</select></div>
+  <div class="form-group"><label>PDF Link (Optional)</label><input id="d-pdf" class="form-input" value="${esc(d.pdfUrl||'')}"></div>
+  <button class="btn-submit" onclick="saveDoc('${col}','${fn}','${id||''}')">Save & Publish</button>`);
+};
+window.saveDoc = async (col, fn, id) => {
+  const data = { title:$('d-title').value, name:$('d-title').value, day:$('d-title').value, class:$('d-class').value, pdfUrl:$('d-pdf').value, isPublished: true };
+  if(!data.title) return toast('Title required','error');
+  if(id) await updateDoc(doc(db,col,id), data); else await addDoc(collection(db,col), data);
+  toast('Saved'); closeModal(); window[fn]();
+};
+
+// --- Payments, Doubts, Users ---
+async function loadPayments() {
+  const all = await fetchAll('payments'); all.sort((a,b)=>(b.date?.toMillis?.()||0)-(a.date?.toMillis?.()||0));
+  $('content').innerHTML = `<div class="page-title">Payments</div>` + 
+    (all.length ? all.map(p=>`
+      <div class="card">
+        <div class="card-info">
+          <h4>${esc(p.name)} <span class="badge" style="background:${p.status==='approved'?'var(--grn)':p.status==='rejected'?'var(--red)':'var(--ylw)'};">${p.status.toUpperCase()}</span></h4>
+          <p>Course: ${esc(p.courseTitle)} | Amount: <b>₹${p.amount}</b></p>
+          <p>UTR: ${esc(p.utr)}</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          ${p.status==='pending' ? `
+            <button class="btn-act btn-green" onclick="appr('${p.id}')">Approve</button>
+            <button class="btn-act btn-yellow" onclick="rej('${p.id}')">Reject</button>
+          ` : ''}
+          <button class="btn-act btn-del" onclick="delItem('payments','${p.id}','loadPayments')">Delete</button>
+        </div>
+      </div>`).join('') : '<div class="card"><p style="width:100%;text-align:center;color:var(--txt-l);">Koi Payment nahi hai.</p></div>');
+}
+window.appr = async id => { await updateDoc(doc(db,'payments',id),{status:'approved'}); toast('Approved'); loadPayments(); };
+window.rej = async id => { await updateDoc(doc(db,'payments',id),{status:'rejected'}); toast('Rejected'); loadPayments(); };
+
+async function loadDoubts() {
+  const all = await fetchAll('doubts'); all.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  $('content').innerHTML = `<div class="page-title">Doubts</div>` + 
+    (all.length ? all.map(d=>`
+      <div class="card">
+        <div class="card-info">
+          <h4>${esc(d.name)} <span class="badge" style="background:${d.status==='resolved'?'var(--grn)':'var(--ylw)'};">${d.status}</span></h4>
+          <p style="margin-bottom:5px;">${esc(d.doubt)}</p>
+          <p>📞 ${esc(d.mobile)}</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          ${d.status!=='resolved' ? `<button class="btn-act btn-green" onclick="res('${d.id}')">Resolve</button>` : ''}
+          <button class="btn-act btn-del" onclick="delItem('doubts','${d.id}','loadDoubts')">Delete</button>
+        </div>
+      </div>`).join('') : '<div class="card"><p style="width:100%;text-align:center;color:var(--txt-l);">Koi Doubt nahi hai.</p></div>');
+}
+window.res = async id => { await updateDoc(doc(db,'doubts',id),{status:'resolved'}); toast('Resolved'); loadDoubts(); };
+
+async function loadUsers() {
+  const all = await fetchAll('users');
+  $('content').innerHTML = `<div class="page-title">Students (${all.length})</div>` + 
+    all.map(u=>`
+      <div class="card">
+        <div class="card-info">
+          <h4>${esc(u.name||'—')} ${u.isBlocked ? '<span class="badge" style="background:var(--red);">BLOCKED</span>' : ''}</h4>
+          <p>📱 ${esc(u.mobile||'')} | Class: ${esc(u.class)}</p>
+        </div>
+        <div style="display:flex; gap:5px;">
+          <button class="btn-act ${u.isBlocked?'btn-green':'btn-yellow'}" onclick="blk('${u.id}', ${u.isBlocked||false})">${u.isBlocked?'Unblock':'Block'}</button>
+          <button class="btn-act btn-del" onclick="delItem('users','${u.id}','loadUsers')">Delete</button>
+        </div>
+      </div>`).join('');
+}
+window.blk = async (id, st) => { await updateDoc(doc(db,'users',id),{isBlocked:!st}); toast(st?'Unblocked':'Blocked'); loadUsers(); };
+
+// --- Notifications ---
+async function loadNotifications() {
+  const all = await fetchAll('notifications'); all.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  $('content').innerHTML = `<div class="page-title">Notifications <button class="add-btn" onclick="addNotif()">+ Send New</button></div>` + 
+    all.map(n=>`
+      <div class="card">
+        <div class="card-info">
+          <h4>${esc(n.title)}</h4>
+          <p>${esc(n.message)}</p>
+        </div>
+        <button class="btn-act btn-del" onclick="delItem('notifications','${n.id}','loadNotifications')">Del</button>
+      </div>`).join('');
+}
+
+window.addNotif = () => openModal(`
+  <h3>Send Notification <button class="close-btn" onclick="closeModal()">✕</button></h3>
+  <div class="form-group"><label>Title</label><input id="nft-title" class="form-input" placeholder="New Course Added!"></div>
+  <div class="form-group"><label>Message</label><textarea id="nft-msg" class="form-input" rows="3" placeholder="Check out the new course..."></textarea></div>
+  <div class="form-group" style="background:var(--ylw-l); padding:10px; border-radius:10px; border:1px solid #FDE68A;">
+    <label style="color:#B45309;">🔒 Admin Password</label>
+    <input type="password" id="nft-pass" class="form-input" placeholder="jmkcc_admin_123">
+  </div>
+  <div style="display:flex; gap:10px; margin-top:20px;">
+    <button class="btn-submit" style="background:var(--grn);" onclick="sendPushNotif(event)">🚀 Push (Tik Tik)</button>
+    <button class="btn-submit" style="background:var(--pri);" onclick="sendInAppNotif(event)">🔔 In-App Only</button>
+  </div>
+`);
+
+window.sendPushNotif = async (e) => {
+  const title = $('nft-title').value; const message = $('nft-msg').value; const secret = $('nft-pass').value;
+  if(!title || !message) return toast('Title aur Message dono bharein!','error');
+  if(!secret) return toast('Admin Password daalein!','error');
+  const btn = e.target; const originalText = btn.innerText; btn.innerText = "Sending..."; btn.disabled = true;
+  try {
+    await addDoc(collection(db,'notifications'), { title, message, createdAt: serverTimestamp() });
+    await fetch(GOOGLE_SCRIPT_URL, { method: "POST", mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ title, message, secret: secret }) });
+    toast('✅ Push Notification Sent!'); alert("Push Notification sabhi students ko chala gaya!"); closeModal(); loadNotifications();
+  } catch(err) { toast('Error: ' + err.message, 'error'); } finally { btn.innerText = originalText; btn.disabled = false; }
+};
+
+window.sendInAppNotif = async (e) => {
+  const title = $('nft-title').value; const message = $('nft-msg').value;
+  if(!title || !message) return toast('Title aur Message dono bharein!','error');
+  const btn = e.target; const originalText = btn.innerText; btn.innerText = "Saving..."; btn.disabled = true;
+  try {
+    await addDoc(collection(db,'notifications'), { title, message, createdAt: serverTimestamp() });
+    toast('✅ In-App Notification Saved!'); alert("In-App Notification save ho gaya!"); closeModal(); loadNotifications();
+  } catch(err) { toast('Error: ' + err.message, 'error'); } finally { btn.innerText = originalText; btn.disabled = false; }
+};
+
+// --- Settings & Common Actions ---
+async function loadSettings() {
+  const snap = await getDoc(doc(db,'settings','app')); const d = snap.exists() ? snap.data() : {};
+  $('content').innerHTML = `
+    <div class="page-title">Settings</div>
+    <div class="card" style="flex-direction:column;align-items:stretch;">
+      <div class="form-group"><label>UPI ID (For Payments)</label><input id="s-upi" class="form-input" value="${esc(d.upiId||'')}"></div>
+      <div class="form-group"><label>WhatsApp Link (Chat Support)</label><input id="s-wa" class="form-input" value="${esc(d.chatLink||'')}"></div>
+      <div class="form-group"><label>Live Class Link</label><input id="s-live" class="form-input" value="${esc(d.liveClassLink||'')}"></div>
+      <button class="btn-submit" onclick="saveSettings()">Save Settings</button>
+    </div>
+  `;
+}
+window.saveSettings = async () => {
+  try {
+    await setDoc(doc(db,'settings','app'), { upiId: $('s-upi').value, chatLink: $('s-wa').value, liveClassLink: $('s-live').value }, { merge: true });
+    toast('✅ Settings Saved');
+  } catch(e) { toast(e.message,'error'); }
+};
+
+window.pub = async (col,id,fn) => { await updateDoc(doc(db,col,id),{isPublished:true}); toast('✅ Published'); window[fn](); };
+window.draft = async (col,id,fn) => { await updateDoc(doc(db,col,id),{isPublished:false}); toast('📝 Drafted'); window[fn](); };
+window.delItem = async (col,id,fn) => { 
+  if(confirm('Delete?')) { 
+    try { await deleteDoc(doc(db,col,id)); toast('✅ Deleted'); if(window[fn]) window[fn](); } 
+    catch(e) { toast('Error: ' + e.message, 'error'); } 
+  } 
+};
+
+window.loadCourses = loadCourses;
+window.loadTests = loadTests;
+window.loadNotes = loadNotes;
+window.loadNcert = loadNcert;
+window.loadPapers = loadPapers;
+window.loadTimetable = loadTimetable;
+window.loadSubjects = loadSubjects;
+window.loadPayments = loadPayments;
+window.loadDoubts = loadDoubts;
+window.loadUsers = loadUsers;
+window.loadNotifications = loadNotifications;
+window.loadReports = loadReports;
+</script>
+</body>
+</html>
